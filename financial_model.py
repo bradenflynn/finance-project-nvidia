@@ -13,6 +13,8 @@ Date:   Feb 11, 2026
 
 import pandas as pd
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 import seaborn as sns
@@ -429,6 +431,66 @@ class NvidiaInstitutionalModel:
         plt.close(fig)
 
     # ==================================================================
+    # CHART 4: Portfolio Summary (Consolidated for Website)
+    # ==================================================================
+    def chart_portfolio_summary(self):
+        """
+        Generates a single, high-resolution dashboard-style image
+        combining all three key visuals for portfolio presentation.
+        """
+        fig = plt.figure(figsize=(16, 12), constrained_layout=True)
+        gs = fig.add_gridspec(2, 2)
+
+        # 1. ROI vs WACC (Upper Left)
+        ax_roi = fig.add_subplot(gs[0, 0])
+        roic = self.roi_detail['steady_roic'] * 100
+        wacc = self.wacc * 100
+        bars = ax_roi.bar(['WACC', 'ROIC'], [wacc, roic],
+                          color=[COLORS['gray'], COLORS['green']],
+                          width=0.6, alpha=0.9, edgecolor='white')
+        ax_roi.set_title('Strategic ROI vs. Hurdle Rate', fontweight='bold', fontsize=16)
+        ax_roi.set_ylabel('Percentage (%)')
+        for bar in bars:
+            ax_roi.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 1,
+                        f'{bar.get_height():.1f}%', ha='center', fontweight='bold')
+        ax_roi.spines[['top', 'right']].set_visible(False)
+
+        # 2. Valuation Bridge (Upper Right)
+        ax_val = fig.add_subplot(gs[0, 1])
+        b = self.base_dcf
+        labels = ['S1', 'S2', 'TV', 'Fair', 'Market']
+        vals = [b['pv_stage1']/self.shares_out, b['pv_stage2']/self.shares_out,
+                b['pv_tv']/self.shares_out, b['per_share'], self.share_price]
+        clrs = [COLORS['blue'], COLORS['blue'], COLORS['orange'], COLORS['green'], COLORS['gray']]
+        bars = ax_val.bar(labels, vals, color=clrs, alpha=0.9, edgecolor='white')
+        ax_val.set_title('DCF Build-Up vs. Market Price', fontweight='bold', fontsize=16)
+        ax_val.set_ylabel('Price per Share ($)')
+        for bar, v in zip(bars, vals):
+            ax_val.text(bar.get_x() + bar.get_width()/2, v + 2, f'${v:.0f}', ha='center', fontsize=10)
+        ax_val.spines[['top', 'right']].set_visible(False)
+
+        # 3. Scenario Matrix (Bottom Span)
+        ax_mat = fig.add_subplot(gs[1, :])
+        growth_rates = [0.10, 0.15, 0.20, 0.25, 0.30]
+        margins = [0.45, 0.50, 0.55, 0.60, 0.65]
+        matrix = []
+        for m in margins:
+            row = [self.dcf_valuation(g, m)['per_share'] for g in growth_rates]
+            matrix.append(row)
+        matrix.reverse()
+        sns.heatmap(matrix, annot=True, fmt='.0f', cmap='RdYlGn', center=self.share_price,
+                    xticklabels=[f'{g:.0%}' for g in growth_rates],
+                    yticklabels=[f'{m:.0%}' for m in reversed(margins)],
+                    ax=ax_mat, cbar=False, linewidths=1)
+        ax_mat.set_title('Valuation Sensitivity Matrix (Growth vs. Margin)', fontweight='bold', fontsize=18)
+        ax_mat.set_xlabel('Revenue CAGR (Years 1-5)')
+        ax_mat.set_ylabel('Operating Margin')
+
+        plt.suptitle('NVIDIA Strategic Financial Analysis Dashboard', fontsize=24, fontweight='bold', y=1.05)
+        fig.savefig('nvidia_portfolio_dashboard.png', dpi=300, bbox_inches='tight')
+        plt.close(fig)
+
+    # ==================================================================
     # EXCEL EXPORT (Full Disclosure — 4 Sheets)
     # ==================================================================
     def export_excel(self):
@@ -559,7 +621,7 @@ class NvidiaInstitutionalModel:
         print('  NVIDIA INSTITUTIONAL FINANCIAL MODEL')
         print(sep)
 
-        print('\n[1/6] WACC Derivation …')
+        print('\n[1/7] WACC Derivation …')
         w = self.wacc_summary()
         print(f'      Rf = {w["Risk-Free Rate"]:.1%}  '
               f'β = {w["Beta (2Y Adjusted)"]:.2f}  '
@@ -567,26 +629,26 @@ class NvidiaInstitutionalModel:
         print(f'      Cost of Equity = {w["Cost of Equity"]:.2%}')
         print(f'      WACC = {w["WACC"]:.2%}')
 
-        print('\n[2/6] Headcount ROI …')
+        print('\n[2/7] Headcount ROI …')
         roi = self.run_headcount_roi()
         print(f'      Steady-State ROIC = {roi["steady_roic"]:.1%}')
         print(f'      Verdict: {roi["verdict"]}')
         print(f'      EV Impact: ${roi["ev_impact_pv"]/1e9:.1f}B')
         print(f'      Share Impact: +${roi["share_impact"]:.2f}')
 
-        print('\n[3/6] Base-Case DCF (20% CAGR, 62% margin) …')
+        print('\n[3/7] Base-Case DCF (20% CAGR, 62% margin) …')
         self.base_dcf = self.dcf_valuation(0.20, self.op_margin)
         b = self.base_dcf
         print(f'      DCF Fair Value = ${b["per_share"]:.2f}')
         print(f'      Market Price   = ${self.share_price:.2f}')
         print(f'      Premium        = {b["premium"]:.1%}')
 
-        print('\n[4/6] Implied Expectations …')
+        print('\n[4/7] Implied Expectations …')
         imp = self.implied_cagr()
         print(f'      CAGR to justify $190: {imp["cagr"]:.1%}')
         print(f'      Implied 5Y Revenue:   ${imp["rev_5y"]/1e9:.0f}B')
 
-        print('\n[5/6] Generating visuals …')
+        print('\n[5/7] Generating visuals …')
         self.chart_investment()
         print('      ✓ visual_1_investment_decision.png')
         self.chart_valuation()
@@ -594,7 +656,11 @@ class NvidiaInstitutionalModel:
         self.chart_scenario_matrix()
         print('      ✓ visual_3_scenario_matrix.png')
 
-        print('\n[6/6] Exporting Excel …')
+        print('\n[6/7] Generating Website Portfolio Dashboard …')
+        self.chart_portfolio_summary()
+        print('      ✓ nvidia_portfolio_dashboard.png')
+
+        print('\n[7/7] Exporting Excel …')
         self.export_excel()
 
         print(f'\n{sep}')
