@@ -1,41 +1,58 @@
-# 📉 Buy-Side Stress Test: Nvidia (Short/Hedge Thesis)
+# Nvidia Financial Model — Headcount Expansion & Valuation Analysis
 
-## Executive Summary
-This branch contains a rigorous **"Assumption Destruction"** stress test of the Nvidia investment thesis.
-
-**Strategic Question**: Is the current $3.5T valuation justified, or is it a cyclical trap?
+> **Nvidia Corp (NVDA)**  •  Share Price: **$190**  •  Market Cap: **$4.67T**  •  Feb 2026
 
 ---
 
-## 💥 The Verdict: HEDGE TAIL RISK ⚠️
+## What This Project Answers
 
-**Recommendation**: Own the core, but sell calls and buy puts.
+This model answers **two strategic questions** about Nvidia:
 
-Our proprietary **Reverse DCF** and **Monte Carlo Analysis** reveal:
-*   **Priced for Perfection**: The market demands ~25% CAGR for 5 years straight.
-*   **Downside Skew**: If AI demand pauses or competition (AMD/Hyperscalers) erodes margins, the stock has **-35% to -67% downside risk**.
-
----
-
-## 📉 Visual Evidence due to "Fat Tail" Risk
-
-### 1. Valuation Reality Check
-The market price (Orange Line) requires the "Consensus" case to be perfect. Any slip into "Competitive Erosion" destroys massive value.
-
-![Valuation Reality](visual_buyside_valuation.png)
-
-### 2. Risk Probability Distribution
-Outcomes are not bell-shaped. They are negatively skewed.
-*   **Upside**: Hard to double from $3.5T.
-*   **Downside**: Easy to halve if margins compress.
-
-![Risk Distribution](visual_buyside_risk.png)
+| # | Question | Who Cares? | Answer |
+|---|----------|------------|--------|
+| 1 | Should Nvidia hire 2,000 new engineers? | **CFO / Board** | ✅ **Yes** — 41% ROIC vs 9.5% cost of capital |
+| 2 | Should an investor buy the stock at $190? | **Portfolio Manager** | ⚠️ **Caution** — $45 speculative premium baked in |
 
 ---
 
-## 📂 Deliverables
-*   **Source Code**: `financial_model.py` (v3.0 - Buy-Side Stress Test Logic)
-*   **Investment Memo**: [Detailed Kill/Fill Analysis](investment_memo.md)
+## 1. The Hiring Decision — **APPROVED** ✅
+
+Nvidia is considering a **$750M investment** (2,000 engineers × $375K fully-loaded cost).
+
+Even after accounting for the cost of manufacturing chips (26% COGS), the investment generates a **41% return** — over **4× the company's cost of capital** (9.5%).
+
+**Bottom Line:** This is a no-brainer for the company. Hire them.
+
+![The ROIC bar chart shows that the project return (41%) dramatically exceeds the cost of capital (9.5%)](visual_1_investment_decision.png)
 
 ---
-*Analysis performed by Antigravity Buy-Side Research on Feb 11, 2026.*
+
+## 2. The Stock Price — **CAUTION** ⚠️
+
+The market prices Nvidia at **$190/share**. Our fundamental model (using consensus 20% revenue growth) values the stock at **$145**.
+
+That means **$45 per share (24%)** is a "hope premium" — the market betting Nvidia will significantly beat expectations.
+
+![The valuation gap chart shows $145 fundamental value vs $190 market price, with the $45 gap labeled as risk](visual_2_valuation_gap.png)
+
+---
+
+## 3. The Scenario Matrix — How Bad Can It Get?
+
+This heatmap shows the **implied share price** under different growth and margin assumptions. Key takeaway:
+
+- **Even the most optimistic scenario** (30% growth, 70% margins) only justifies **~$97/share**
+- At today's $190, the market is pricing in growth and margins **beyond any fundamental scenario** in this model
+- If margins compress to 55% (historical norms for semis), fair value drops to **$62–$76**
+
+![The heatmap shows implied prices ranging from $56 to $97 across all scenarios — all well below $190](visual_3_risk_matrix.png)
+
+---
+
+## 📂 Files
+
+| File | Description |
+|------|-------------|
+| `financial_model.py` | Python source code (unified model) |
+| `Nvidia_Final_Model.xlsx` | Excel workbook with 3 tabs: Executive Summary, Headcount ROI, Scenario Matrix |
+| `visual_1_investment_decisio
