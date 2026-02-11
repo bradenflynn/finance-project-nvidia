@@ -1,0 +1,106 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+
+# --- 1. SETUP DATA (The "Inputs") ---
+# Nvidia TTM (Trailing Twelve Months) rough estimates for the "Historicals" tab
+# Source: Public estimates for FY2025/26 context
+current_revenue = 120000000000  # $120 Billion
+current_opex = 45000000000      # $45 Billion (Cost of Revenue + OpEx)
+current_op_income = current_revenue - current_opex
+current_margin = current_op_income / current_revenue
+
+# The "Ask" (Investment Parameters)
+headcount_add = 2000
+cost_per_head = 350000
+total_investment = headcount_add * cost_per_head  # $700 Million
+
+# --- 2. BUILD SCENARIOS (The "Math") ---
+scenarios = {
+    "Status Quo": {"New_Sales": 0, "Investment": 0},
+    "Bear Case (Low)": {"New_Sales": 500000000, "Investment": total_investment},
+    "Base Case (Break-Even)": {"New_Sales": 1000000000, "Investment": total_investment},
+    "Bull Case (High)": {"New_Sales": 3000000000, "Investment": total_investment}
+}
+
+data = []
+for name, val in scenarios.items():
+    new_rev = current_revenue + val["New_Sales"]
+    new_opex = current_opex + val["Investment"]
+    new_op_income = new_rev - new_opex
+    new_margin = new_op_income / new_rev
+    
+    data.append({
+        "Scenario": name,
+        "Revenue ($B)": new_rev / 1e9,
+        "OpEx ($B)": new_opex / 1e9,
+        "Op Income ($B)": new_op_income / 1e9,
+        "Margin (%)": new_margin * 100,
+        "Investment Impact": "($700M)" if val["Investment"] > 0 else "-"
+    })
+
+df = pd.DataFrame(data)
+
+# --- 3. GENERATE VISUALS (The "Eye Candy") ---
+# Chart 1: Margin Impact
+plt.figure(figsize=(10, 6))
+colors = ['gray', 'red', 'orange', 'green']
+bars = plt.bar(df['Scenario'], df['Margin (%)'], color=colors)
+plt.axhline(y=current_margin*100, color='blue', linestyle='--', label='Current Margin Floor')
+plt.title('Impact of $700M Expansion on Operating Margin', fontsize=14)
+plt.ylabel('Operating Margin (%)')
+plt.ylim(50, 70)  # Zoom in to show the difference
+plt.grid(axis='y', linestyle='--', alpha=0.7)
+plt.legend()
+
+# Add labels on bars
+for bar in bars:
+    height = bar.get_height()
+    plt.text(bar.get_x() + bar.get_width()/2., height,
+             f'{height:.2f}%', ha='center', va='bottom', fontsize=12, fontweight='bold')
+
+plt.tight_layout()
+plt.savefig('margin_impact.png')
+print("✅ Visual 1 Generated: margin_impact.png")
+
+# Chart 2: Revenue vs Investment ROI
+plt.figure(figsize=(10, 6))
+scenarios_subset = df[df['Scenario'] != "Status Quo"]
+x = np.arange(len(scenarios_subset))
+width = 0.35
+
+fig, ax = plt.subplots(figsize=(10,6))
+rects1 = ax.bar(x - width/2, [0.7]*3, width, label='Cost ($0.7B)', color='salmon')
+rects2 = ax.bar(x + width/2, [0.5, 1.0, 3.0], width, label='New Revenue ($B)', color='skyblue')
+
+ax.set_ylabel('$ Billions')
+ax.set_title('ROI Analysis: Cost vs. New Revenue')
+ax.set_xticks(x)
+ax.set_xticklabels(scenarios_subset['Scenario'])
+ax.legend()
+ax.axhline(y=0.7, color='red', linestyle=':', label='Breakeven Line')
+
+plt.tight_layout()
+plt.savefig('roi_analysis.png')
+print("✅ Visual 2 Generated: roi_analysis.png")
+
+# --- 4. EXPORT TO EXCEL ---
+with pd.ExcelWriter('NVDA_Expansion_Model.xlsx', engine='xlsxwriter') as writer:
+    df.to_excel(writer, sheet_name='Dashboard', index=False)
+    
+    # Create a detailed "Historicals" tab
+    hist_df = pd.DataFrame({
+        "Metric": ["Total Revenue", "Cost of Revenue + OpEx", "Operating Income", "Op Margin"],
+        "TTM Actuals": [current_revenue, current_opex, current_op_income, current_margin]
+    })
+    hist_df.to_excel(writer, sheet_name='Historicals', index=False)
+    
+    # Create the "Inputs" tab
+    inputs_df = pd.DataFrame({
+        "Assumption": ["New Headcount", "Fully Loaded Cost", "Total Investment"],
+        "Value": [headcount_add, cost_per_head, total_investment]
+    })
+    inputs_df.to_excel(writer, sheet_name='Inputs', index=False)
+
+print("✅ Excel Model Generated: NVDA_Expansion_Model.xlsx")
+print("🚀 Project Build Complete!")
